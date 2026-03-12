@@ -33,6 +33,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    externalNativeBuild {
+        cmake {
+            path = file("../../../packages/glue/CMakeLists.txt")
+        }
+    }
 }
 
 dependencies {
