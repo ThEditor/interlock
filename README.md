@@ -32,10 +32,32 @@ This repository is set up as a `pnpm` monorepo.
 - `apps/` for runnable applications
 - `packages/` for shared libraries and utilities
 
-## Common commands
 
-- `pnpm install`
-- `pnpm dev`
-- `pnpm build`
-- `pnpm test`
-- `pnpm lint`
+## QuickStart
+
+Terminal 1
+```bash
+cd apps/interlocktest
+./gradlew clean
+./gradlew assembleDebug
+# or for watched changes
+# ./gradlew installDebug --continuous
+
+```
+
+Terminal 2
+```bash
+# connect an android device
+# emulator
+# emulator -list-avds
+# emulator -avd avd_name
+# wireless adb
+# adb pair <ip-addr>:<port>
+# adb connect <ip-addr>:<port>
+
+# adb install not required if using installDebug
+# adb install apps/interlocktest/app/build/outputs/apk/debug/app-debug.apk
+
+adb shell am start -n xyz.theditor.interlocktest/.MainActivity
+adb logcat --pid=$(adb shell pidof -s xyz.theditor.interlocktest)
+```
