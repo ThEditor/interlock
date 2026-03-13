@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18.1)
-project(glue LANGUAGES CXX)
+project(glue LANGUAGES C CXX)
 
 set(GLUE_TARGET glue)
 
@@ -14,7 +14,18 @@ if(NOT GLUE_SOURCES)
 	message(FATAL_ERROR "No C++ source files found in ${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
-add_library(${GLUE_TARGET} SHARED ${GLUE_SOURCES})
+add_library(glue SHARED
+  ${GLUE_SOURCES}
+
+  ../quickjs/quickjs.c
+  ../quickjs/libregexp.c
+  ../quickjs/libunicode.c
+  ../quickjs/dtoa.c
+)
+
+target_include_directories(glue PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../quickjs
+)
 
 target_compile_features(${GLUE_TARGET} PRIVATE cxx_std_17)
 
