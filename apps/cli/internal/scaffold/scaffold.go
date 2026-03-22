@@ -24,6 +24,7 @@ type InitInput struct {
 	ProjectName        string
 	AndroidPackageName string
 	Description        string
+	PackageManager     string
 }
 
 type packageJSON struct {
@@ -32,6 +33,31 @@ type packageJSON struct {
 	Private     bool   `json:"private"`
 	Description string `json:"description,omitempty"`
 	Main        string `json:"main"`
+}
+
+type interlockConfig struct {
+	Version        string `json:"version"`
+	JSSourceDir    string `json:"jsSourceDir"`
+	AndroidPkg     string `json:"androidPackage"`
+	PackageManager string `json:"packageManager,omitempty"`
+	Description    string `json:"description,omitempty"`
+}
+
+type InterlockConfig = interlockConfig
+
+func LoadInterlockConfig(projectDir string) (*interlockConfig, error) {
+	configPath := filepath.Join(projectDir, "interlock.config.json")
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("read interlock.config.json: %w", err)
+	}
+
+	var config interlockConfig
+	if err := json.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("parse interlock.config.json: %w", err)
+	}
+
+	return &config, nil
 }
 
 func CreateProject(baseDir, repoRoot string, input InitInput) (string, error) {
@@ -60,6 +86,10 @@ func CreateProject(baseDir, repoRoot string, input InitInput) (string, error) {
 	}
 
 	if err := writePackageJSON(projectDir, input); err != nil {
+		return "", err
+	}
+
+	if err := writeInterlockConfig(projectDir, input); err != nil {
 		return "", err
 	}
 
@@ -205,6 +235,28 @@ func writePackageJSON(projectDir string, input InitInput) error {
 	packageJSONPath := filepath.Join(projectDir, "package.json")
 	if err := os.WriteFile(packageJSONPath, data, 0o644); err != nil {
 		return fmt.Errorf("write package.json: %w", err)
+	}
+	return nil
+}
+
+func writeInterlockConfig(projectDir string, input InitInput) error {
+	content := interlockConfig{
+		Version:        "0.1",
+		JSSourceDir:    ".",
+		AndroidPkg:     input.AndroidPackageName,
+		PackageManager: input.PackageManager,
+		Description:    input.Description,
+	}
+
+	data, err := json.MarshalIndent(content, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal interlock.config.json: %w", err)
+	}
+	data = append(data, '\n')
+
+	configPath := filepath.Join(projectDir, "interlock.config.json")
+	if err := os.WriteFile(configPath, data, 0o644); err != nil {
+		return fmt.Errorf("write interlock.config.json: %w", err)
 	}
 	return nil
 }

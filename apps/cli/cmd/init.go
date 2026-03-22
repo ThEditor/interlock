@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -47,7 +48,18 @@ func NewInitCommand() *cli.Command {
 				return fmt.Errorf("change directory to project: %w", err)
 			}
 
-			fmt.Printf("\nCreated project at %s\n", projectPath)
+			shouldInstall, err := promptInstallNow()
+			if err != nil {
+				return err
+			}
+
+			if shouldInstall && input.PackageManager != "none" {
+				if err := installPackages(projectPath, input.PackageManager); err != nil {
+					return err
+				}
+			}
+
+			fmt.Printf("Created project at %s\n", projectPath)
 			fmt.Println("Current directory updated to project root.")
 			return nil
 		},
@@ -83,10 +95,16 @@ func promptInitInput() (scaffold.InitInput, error) {
 		return scaffold.InitInput{}, err
 	}
 
+	packageManager, err := selectPackageManager()
+	if err != nil {
+		return scaffold.InitInput{}, err
+	}
+
 	return scaffold.InitInput{
 		ProjectName:        projectName,
 		AndroidPackageName: projectPackage,
 		Description:        description,
+		PackageManager:     packageManager,
 	}, nil
 }
 
@@ -149,4 +167,66 @@ func isDir(path string) bool {
 		return false
 	}
 	return info.IsDir()
+}
+
+func selectPackageManager() (string, error) {
+	prompt := promptui.Select{
+		Label: "Package manager",
+		Items: []string{"npm", "yarn", "pnpm", "bun", "none (skip)"},
+	}
+
+	idx, _, err := prompt.Run()
+	if err != nil {
+		if errors.Is(err, promptui.ErrInterrupt) || errors.Is(err, io.EOF) {
+			return "", fmt.Errorf("prompt aborted")
+		}
+		return "", fmt.Errorf("select package manager: %w", err)
+	}
+
+	managers := []string{"npm", "yarn", "pnpm", "bun", "none"}
+	return managers[idx], nil
+}
+
+func promptInstallNow() (bool, error) {
+	prompt := promptui.Select{
+		Label: "Install dependencies now",
+		Items: []string{"Yes", "No"},
+	}
+
+	idx, _, err := prompt.Run()
+	if err != nil {
+		if errors.Is(err, promptui.ErrInterrupt) || errors.Is(err, io.EOF) {
+			return false, fmt.Errorf("prompt aborted")
+		}
+		return false, fmt.Errorf("select install option: %w", err)
+	}
+
+	return idx == 0, nil
+}
+
+func installPackages(projectDir, packageManager string) error {
+	var cmd *exec.Cmd
+
+	switch packageManager {
+	case "npm":
+		cmd = exec.Command("npm", "install", "-D", "esbuild")
+	case "yarn":
+		cmd = exec.Command("yarn", "add", "-D", "esbuild")
+	case "pnpm":
+		cmd = exec.Command("pnpm", "add", "-D", "esbuild")
+	case "bun":
+		cmd = exec.Command("bun", "add", "-D", "esbuild")
+	default:
+		return nil
+	}
+
+	cmd.Dir = projectDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("install packages with %s: %w", packageManager, err)
+	}
+
+	return nil
 }
