@@ -36,7 +36,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path = file("../../../packages/glue/CMakeLists.txt")
+            path = file("../../interlock/packages/glue/CMakeLists.txt")
         }
     }
 }

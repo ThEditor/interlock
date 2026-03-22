@@ -2,24 +2,16 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
-	"github.com/urfave/cli/v3"
+	"cli/cmd"
 )
 
 func main() {
-	cmd := &cli.Command{
-		Name:  "interlock",
-		Usage: "setup an interlock project",
-		Action: func(context.Context, *cli.Command) error {
-			fmt.Println("work in progress...")
-			return nil
-		},
-	}
+	rootCmd := cmd.NewRootCommand()
 
-	if err := cmd.Run(context.Background(), os.Args); err != nil {
+	if err := rootCmd.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
 }
