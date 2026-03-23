@@ -35,9 +35,19 @@ This repository is set up as a `pnpm` monorepo.
 
 ## QuickStart
 
-Terminal 1
+Setup
 ```bash
-cd apps/interlocktest
+git clone --recurse-submodules git@github.com:ThEditor/interlock.git
+make
+
+mkdir tmp && cd tmp
+../bin/interlock init # start an interlock project
+cd <project>
+../../bin/interlock project bundle # run this for each js code change
+```
+
+Compile
+```bash
 ./gradlew clean
 ./gradlew assembleDebug
 # or for watched changes
@@ -45,7 +55,7 @@ cd apps/interlocktest
 
 ```
 
-Terminal 2
+Execute
 ```bash
 # connect an android device
 # emulator
@@ -56,8 +66,8 @@ Terminal 2
 # adb connect <ip-addr>:<port>
 
 # adb install not required if using installDebug
-# adb install apps/interlocktest/app/build/outputs/apk/debug/app-debug.apk
+# adb install android/app/build/outputs/apk/debug/app-debug.apk
 
-adb shell am start -n xyz.theditor.interlocktest/.MainActivity
-adb logcat --pid=$(adb shell pidof -s xyz.theditor.interlocktest)
+adb shell am start -n <package>/.MainActivity
+adb logcat --pid=$(adb shell pidof -s <package>)
 ```
