@@ -1,5 +1,6 @@
 package xyz.theditor.interlocktest
 
+import android.content.res.AssetManager
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -14,11 +15,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    external fun startRuntime()
+    external fun startRuntime(assetManager: AssetManager)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        startRuntime()
+        startRuntime(assets)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->

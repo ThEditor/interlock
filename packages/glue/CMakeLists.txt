@@ -31,5 +31,6 @@ target_compile_features(${GLUE_TARGET} PRIVATE cxx_std_17)
 
 if(ANDROID)
 	find_library(LOG_LIB log)
-	target_link_libraries(${GLUE_TARGET} PRIVATE ${LOG_LIB})
+	find_library(ANDROID_LIB android)
+	target_link_libraries(${GLUE_TARGET} PRIVATE ${LOG_LIB} ${ANDROID_LIB})
 endif()

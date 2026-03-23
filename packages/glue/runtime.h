@@ -1,5 +1,6 @@
 #pragma once
 
-void runtime_start();
+#include <string>
 
-void run_js_runtime();
+void runtime_start(std::string bundle_source);
+void run_js_runtime(std::string bundle_source);
