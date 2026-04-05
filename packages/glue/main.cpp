@@ -46,6 +46,6 @@ static std::string load_bundle_from_assets(JNIEnv* env, jobject asset_manager)
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_xyz_theditor_interlocktest_MainActivity_startRuntime(JNIEnv* env, jobject /* thiz */, jobject asset_manager) {
-	runtime_start(load_bundle_from_assets(env, asset_manager));
+Java_xyz_theditor_interlocktest_MainActivity_startRuntime(JNIEnv* env, jobject thiz, jobject asset_manager) {
+    runtime_start(env, thiz, load_bundle_from_assets(env, asset_manager));
 }
