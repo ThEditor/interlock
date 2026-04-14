@@ -63,17 +63,20 @@ static JSValue render(JSContext* ctx,
 
   jclass stringClass = env->FindClass("java/lang/String");
   if (stringClass == nullptr) {
+    if (env->ExceptionCheck()) env->ExceptionClear();
     return JS_ThrowInternalError(ctx, "Failed to resolve java.lang.String class");
   }
 
   jobjectArray typeArray = env->NewObjectArray(len, stringClass, nullptr);
   if (typeArray == nullptr) {
+    if (env->ExceptionCheck()) env->ExceptionClear();
     env->DeleteLocalRef(stringClass);
     return JS_ThrowInternalError(ctx, "Failed to allocate types array");
   }
 
   jobjectArray textArray = env->NewObjectArray(len, stringClass, nullptr);
   if (textArray == nullptr) {
+    if (env->ExceptionCheck()) env->ExceptionClear();
     env->DeleteLocalRef(typeArray);
     env->DeleteLocalRef(stringClass);
     return JS_ThrowInternalError(ctx, "Failed to allocate texts array");
@@ -93,6 +96,16 @@ static JSValue render(JSContext* ctx,
       return JS_ThrowTypeError(ctx, "render item 'type' must be a string");
     }
     jstring jtype = env->NewStringUTF(type);
+    if (jtype == nullptr) {
+      if (env->ExceptionCheck()) env->ExceptionClear();
+      JS_FreeCString(ctx, type);
+      JS_FreeValue(ctx, type_val);
+      JS_FreeValue(ctx, obj);
+      env->DeleteLocalRef(textArray);
+      env->DeleteLocalRef(typeArray);
+      env->DeleteLocalRef(stringClass);
+      return JS_ThrowInternalError(ctx, "OOM creating jstring for type");
+    }
 
     JSValue text_val = JS_GetPropertyStr(ctx, obj, "text");
     const char *text = JS_ToCString(ctx, text_val);
@@ -108,6 +121,19 @@ static JSValue render(JSContext* ctx,
       return JS_ThrowTypeError(ctx, "render item 'text' must be a string");
     }
     jstring jtext = env->NewStringUTF(text);
+    if (jtext == nullptr) {
+      if (env->ExceptionCheck()) env->ExceptionClear();
+      env->DeleteLocalRef(jtype);
+      JS_FreeCString(ctx, text);
+      JS_FreeValue(ctx, text_val);
+      JS_FreeCString(ctx, type);
+      JS_FreeValue(ctx, type_val);
+      JS_FreeValue(ctx, obj);
+      env->DeleteLocalRef(textArray);
+      env->DeleteLocalRef(typeArray);
+      env->DeleteLocalRef(stringClass);
+      return JS_ThrowInternalError(ctx, "OOM creating jstring for text");
+    }
 
     env->SetObjectArrayElement(typeArray, i, jtype);
     env->SetObjectArrayElement(textArray, i, jtext);
@@ -124,7 +150,15 @@ static JSValue render(JSContext* ctx,
   }
 
   // Call MainActivity.createViews with the array of Pair objects
-  jobject activity = get_activity();
+  RuntimeContext* rctx = reinterpret_cast<RuntimeContext*>(JS_GetContextOpaque(ctx));
+  if (rctx == nullptr) {
+    env->DeleteLocalRef(textArray);
+    env->DeleteLocalRef(typeArray);
+    env->DeleteLocalRef(stringClass);
+    return JS_ThrowInternalError(ctx, "Activity context is unavailable");
+  }
+  jobject activity = rctx->activity;
+  
   if (activity == nullptr) {
     env->DeleteLocalRef(textArray);
     env->DeleteLocalRef(typeArray);
@@ -134,6 +168,7 @@ static JSValue render(JSContext* ctx,
 
   jclass activityClass = env->GetObjectClass(activity);
   if (activityClass == nullptr) {
+    if (env->ExceptionCheck()) env->ExceptionClear();
     env->DeleteLocalRef(textArray);
     env->DeleteLocalRef(typeArray);
     env->DeleteLocalRef(stringClass);
@@ -142,6 +177,7 @@ static JSValue render(JSContext* ctx,
 
   jmethodID createViewsMethod = env->GetMethodID(activityClass, "enqueueCreateViews", "([Ljava/lang/String;[Ljava/lang/String;)V");
   if (createViewsMethod == nullptr) {
+    if (env->ExceptionCheck()) env->ExceptionClear();
     env->DeleteLocalRef(activityClass);
     env->DeleteLocalRef(textArray);
     env->DeleteLocalRef(typeArray);

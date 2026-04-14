@@ -5,11 +5,7 @@
 #include "quickjs.h"
 #include "binding.h"
 
-static JSRuntime *rt = nullptr;
-static JSContext *ctx = nullptr;
-
 static JavaVM *g_jvm = nullptr;
-static jobject g_activity = nullptr;
 
 JNIEnv *get_jni_env_for_current_thread(bool *did_attach)
 {
@@ -56,10 +52,6 @@ void release_jni_env_for_current_thread(bool did_attach)
 	}
 }
 
-jobject get_activity()
-{
-	return g_activity;
-}
 
 void runtime_start(JNIEnv *env, jobject activity, std::string bundle_source)
 {
@@ -81,29 +73,27 @@ void runtime_start(JNIEnv *env, jobject activity, std::string bundle_source)
 		return;
 	}
 
-	if (g_activity != nullptr)
-	{
-		env->DeleteGlobalRef(g_activity);
-		g_activity = nullptr;
-	}
-
-	g_activity = env->NewGlobalRef(activity);
-	if (g_activity == nullptr)
+	jobject global_activity = env->NewGlobalRef(activity);
+	if (global_activity == nullptr)
 	{
 		GLUE_LOG("Failed to create global reference for activity");
 		return;
 	}
 
 	GLUE_LOG("Initiating");
-	std::thread jsThread(run_js_runtime, std::move(bundle_source));
+	std::thread jsThread(run_js_runtime, global_activity, std::move(bundle_source));
 	jsThread.detach();
 }
 
-void run_js_runtime(std::string bundle_source)
+void run_js_runtime(jobject activity, std::string bundle_source)
 {
 	GLUE_LOG("Starting js runtime");
-	rt = JS_NewRuntime();
-	ctx = JS_NewContext(rt);
+	JSRuntime *rt = JS_NewRuntime();
+	JSContext *ctx = JS_NewContext(rt);
+
+	RuntimeContext rctx;
+	rctx.activity = activity;
+	JS_SetContextOpaque(ctx, &rctx);
 
 	bind_js(ctx);
 
@@ -149,10 +139,9 @@ void run_js_runtime(std::string bundle_source)
 
 	bool did_attach = false;
 	JNIEnv *env = get_jni_env_for_current_thread(&did_attach);
-	if (env != nullptr && g_activity != nullptr)
+	if (env != nullptr && activity != nullptr)
 	{
-		env->DeleteGlobalRef(g_activity);
-		g_activity = nullptr;
+		env->DeleteGlobalRef(activity);
 	}
 	release_jni_env_for_current_thread(did_attach);
 }
