@@ -200,6 +200,18 @@ func applyTemplateRewrites(projectDir string, input InitInput) error {
 		return fmt.Errorf("remove old MainActivity.kt: %w", err)
 	}
 
+	cleanDir := filepath.Dir(oldMainActivityPath)
+	stopDir := filepath.Join(projectDir, "android", "app", "src", "main", "java")
+	for cleanDir != stopDir && cleanDir != "." && cleanDir != "/" {
+		entries, err := os.ReadDir(cleanDir)
+		if err == nil && len(entries) == 0 {
+			os.Remove(cleanDir)
+			cleanDir = filepath.Dir(cleanDir)
+		} else {
+			break
+		}
+	}
+
 	jniPath := filepath.Join(projectDir, "interlock", "packages", "glue", "main.cpp")
 	jniContent, err := os.ReadFile(jniPath)
 	if err != nil {
