@@ -35,6 +35,19 @@ This repository is set up as a `pnpm` monorepo.
 
 ## QuickStart
 
+### Using CLI
+```bash
+git clone --recurse-submodules git@github.com:ThEditor/interlock.git
+make
+
+mkdir tmp && cd tmp
+../bin/interlock init # start an interlock project
+cd <project>
+../../bin/interlock project dev # dev mode
+```
+### Without CLI
+(only used CLI for `esbuild` bundling)
+
 Setup
 ```bash
 git clone --recurse-submodules git@github.com:ThEditor/interlock.git
