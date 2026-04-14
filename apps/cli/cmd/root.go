@@ -37,6 +37,8 @@ func NewProjectCommandGroup() *cli.Command {
 		Usage: "project-related commands",
 		Commands: []*cli.Command{
 			NewBundleCommand(),
+			NewRunCommand(),
+			NewDevCommand(),
 		},
 	}
 }
